@@ -116,7 +116,7 @@ While this is a simplified model, it demonstrates the core concepts that could b
 ## Getting Started
 
 1. Clone this repository
-2. Open `index.html` in a modern web browser
+2. Open `DRSS.html` in a modern web browser
 3. Use the controls to adjust parameters and observe the simulation
 
 No build process or server is required - the application runs entirely in the browser.
