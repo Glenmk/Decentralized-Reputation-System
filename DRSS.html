@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decentralized Social Network Reputation Oracle</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        h1, h2 {
+            color: #2c3e50;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .panel {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            flex: 1;
+            min-width: 300px;
+        }
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+        .reputation-positive {
+            color: #27ae60;
+        }
+        .reputation-negative {
+            color: #e74c3c;
+        }
+        .reputation-neutral {
+            color: #f39c12;
+        }
+        .network-container {
+            height: 500px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+            overflow: hidden;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .stats div {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            flex: 1;
+            margin-right: 15px;
+            text-align: center;
+        }
+        .stats div:last-child {
+            margin-right: 0;
+        }
+        .stats h3 {
+            margin-top: 0;
+            color: #7f8c8d;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+        .stats p {
+            margin-bottom: 0;
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .slider-container label {
+            min-width: 180px;
+        }
+        input[type="range"] {
+            flex: 1;
+        }
+        .value-display {
+            min-width: 40px;
+            text-align: right;
+        }
+        .user-filter {
+            margin-top: 20px;
+            padding: 10px;
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Decentralized Social Network Reputation Oracle</h1>
+    
+    <div class="stats">
+        <div>
+            <h3>Total Users</h3>
+            <p id="totalUsers">0</p>
+        </div>
+        <div>
+            <h3>Total Interactions</h3>
+            <p id="totalInteractions">0</p>
+        </div>
+        <div>
+            <h3>Current Time Step</h3>
+            <p id="currentTime">0</p>
+        </div>
+        <div>
+            <h3>Average Reputation</h3>
+            <p id="avgReputation">0.00</p>
+        </div>
+    </div>
+    
+    <div class="controls">
+        <div class="slider-container">
+            <label for="numUsers">Number of Users:</label>
+            <input type="range" id="numUsers" min="10" max="50" value="15">
+            <span id="numUsersValue" class="value-display">15</span>
+        </div>
+        
+        <div class="slider-container">
+            <label for="numInteractions">Initial Interactions:</label>
+            <input type="range" id="numInteractions" min="50" max="500" value="100">
+            <span id="numInteractionsValue" class="value-display">100</span>
+        </div>
+        
+        <div class="slider-container">
+            <label for="timeDecay">Time Decay Factor:</label>
+            <input type="range" id="timeDecay" min="1" max="100" value="20">
+            <span id="timeDecayValue" class="value-display">0.20</span>
+        </div>
+        
+        <div class="slider-container">
+            <label for="trustPropagation">Trust Propagation Factor:</label>
+            <input type="range" id="trustPropagation" min="1" max="100" value="30">
+            <span id="trustPropagationValue" class="value-display">0.30</span>
+        </div>
+        
+        <div>
+            <button id="resetBtn">Reset Network</button>
+            <button id="simulateBtn">Simulate New Interactions</button>
+            <button id="timeStepBtn">Advance Time Step</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="panel">
+            <h2>User Reputation Rankings</h2>
+            <input type="text" id="userFilter" class="user-filter" placeholder="Filter by user ID...">
+            <table id="reputationTable">
+                <thead>
+                    <tr>
+                        <th>User ID</th>
+                        <th>Reputation</th>
+                        <th>Interactions</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- User data rows will be added here -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="panel">
+            <h2>Network Visualization</h2>
+            <div id="networkGraph" class="network-container">
+                <!-- Network visualization will be rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script>
+        // Main data structures
+        let users = [];
+        let currentTimeStep = 0;
+        
+        // Configuration parameters (adjustable through UI)
+        let timeDecayFactor = 0.2;        // How quickly older interactions lose impact
+        let trustPropagationFactor = 0.3; // How much high-reputation users influence others' reputation
+        
+        // Interaction weights
+        const interactionWeights = {
+            post: 1,          // Neutral
+            comment: 1.5,     // Slightly positive
+            like: 2,          // Positive
+            report: -3        // Strongly negative
+        };
+        
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set up UI event listeners
+            document.getElementById('resetBtn').addEventListener('click', resetNetwork);
+            document.getElementById('simulateBtn').addEventListener('click', simulateNewInteractions);
+            document.getElementById('timeStepBtn').addEventListener('click', advanceTimeStep);
+            document.getElementById('userFilter').addEventListener('input', filterUsers);
+            
+            // Set up slider listeners
+            document.getElementById('numUsers').addEventListener('input', updateNumUsersValue);
+            document.getElementById('numInteractions').addEventListener('input', updateNumInteractionsValue);
+            document.getElementById('timeDecay').addEventListener('input', updateTimeDecayValue);
+            document.getElementById('trustPropagation').addEventListener('input', updateTrustPropagationValue);
+            
+            // Initialize with default values
+            resetNetwork();
+        });
+        
+        // Update displayed values from sliders
+        function updateNumUsersValue() {
+            const value = document.getElementById('numUsers').value;
+            document.getElementById('numUsersValue').textContent = value;
+        }
+        
+        function updateNumInteractionsValue() {
+            const value = document.getElementById('numInteractions').value;
+            document.getElementById('numInteractionsValue').textContent = value;
+        }
+        
+        function updateTimeDecayValue() {
+            const value = document.getElementById('timeDecay').value / 100;
+            timeDecayFactor = value;
+            document.getElementById('timeDecayValue').textContent = value.toFixed(2);
+            calculateReputations();
+            updateUI();
+        }
+        
+        function updateTrustPropagationValue() {
+            const value = document.getElementById('trustPropagation').value / 100;
+            trustPropagationFactor = value;
+            document.getElementById('trustPropagationValue').textContent = value.toFixed(2);
+            calculateReputations();
+            updateUI();
+        }
+        
+        // Reset the network with new users
+        function resetNetwork() {
+            const numUsers = parseInt(document.getElementById('numUsers').value);
+            const numInteractions = parseInt(document.getElementById('numInteractions').value);
+            
+            users = generateUsers(numUsers);
+            currentTimeStep = 100; // Start at time step 100 to allow for history
+            
+            // Generate initial interactions
+            generateInteractions(users, numInteractions, currentTimeStep);
+            
+            // Calculate initial reputations
+            calculateReputations();
+            
+            // Update the UI
+            updateUI();
+        }
+        
+        // Generate a set of users
+        function generateUsers(numUsers) {
+            const users = [];
+            for (let i = 0; i < numUsers; i++) {
+                users.push({
+                    userId: "user" + i,
+                    interactions: [],
+                    reputation: 0
+                });
+            }
+            return users;
+        }
+        
+        // Generate random interactions between users
+        function generateInteractions(users, numInteractions, timeRange) {
+            for (let i = 0; i < numInteractions; i++) {
+                const userIndex = Math.floor(Math.random() * users.length);
+                const user = users[userIndex];
+                
+                // Avoid self-interactions
+                let targetUserIndex;
+                do {
+                    targetUserIndex = Math.floor(Math.random() * users.length);
+                } while (targetUserIndex === userIndex);
+                
+                const targetUser = users[targetUserIndex];
+                const interactionTypes = ["post", "comment", "like", "report"];
+                const interactionType = interactionTypes[Math.floor(Math.random() * interactionTypes.length)];
+                
+                // Generate a timestamp between 0 and current time step
+                const timestamp = Math.floor(Math.random() * timeRange);
+                
+                user.interactions.push({
+                    type: interactionType,
+                    targetUserId: targetUser.userId,
+                    timestamp: timestamp
+                });
+            }
+        }
+        
+        // Calculate reputation scores for all users
+        function calculateReputations() {
+            // Reset reputations to 0
+            users.forEach(user => {
+                user.reputation = 0;
+            });
+            
+            // First pass: Calculate base reputation from own interactions
+            users.forEach(user => {
+                user.interactions.forEach(interaction => {
+                    // Apply time decay (older interactions have less impact)
+                    const timeFactor = Math.exp(-timeDecayFactor * (currentTimeStep - interaction.timestamp) / 100);
+                    
+                    // Apply weight based on interaction type
+                    const weight = interactionWeights[interaction.type];
+                    
+                    // Add to user's reputation
+                    user.reputation += weight * timeFactor;
+                });
+            });
+            
+            // Normalize reputations to avoid extreme values
+            normalizeReputations();
+            
+            // Second pass: Apply trust propagation (high reputation users influence others)
+            users.forEach(user => {
+                user.interactions.forEach(interaction => {
+                    // Only positive interactions propagate trust
+                    if (interactionWeights[interaction.type] > 0) {
+                        const targetUser = users.find(u => u.userId === interaction.targetUserId);
+                        if (targetUser) {
+                            // Time decay factor
+                            const timeFactor = Math.exp(-timeDecayFactor * (currentTimeStep - interaction.timestamp) / 100);
+                            
+                            // Positive interaction from high-reputation user increases target's reputation
+                            targetUser.reputation += user.reputation * trustPropagationFactor * timeFactor;
+                        }
+                    }
+                });
+            });
+            
+            // Final normalization
+            normalizeReputations();
+        }
+        
+        // Normalize reputation scores to a reasonable range
+        function normalizeReputations() {
+            // Find min and max
+            let minRep = Infinity;
+            let maxRep = -Infinity;
+            
+            users.forEach(user => {
+                minRep = Math.min(minRep, user.reputation);
+                maxRep = Math.max(maxRep, user.reputation);
+            });
+            
+            // Avoid division by zero
+            const range = maxRep - minRep;
+            if (range === 0) return;
+            
+            // Normalize to [-5, 5] range
+            users.forEach(user => {
+                user.reputation = ((user.reputation - minRep) / range * 10) - 5;
+                user.reputation = parseFloat(user.reputation.toFixed(2));
+            });
+        }
+        
+        // Simulate new random interactions
+        function simulateNewInteractions() {
+            const numNewInteractions = Math.floor(users.length * 2); // 2 interactions per user on average
+            generateInteractions(users, numNewInteractions, currentTimeStep);
+            calculateReputations();
+            updateUI();
+        }
+        
+        // Advance the simulation time step
+        function advanceTimeStep() {
+            currentTimeStep += 10;
+            calculateReputations();
+            updateUI();
+        }
+        
+        // Filter users in the table based on search input
+        function filterUsers() {
+            const filterText = document.getElementById('userFilter').value.toLowerCase();
+            const rows = document.getElementById('tableBody').getElementsByTagName('tr');
+            
+            for (let i = 0; i < rows.length; i++) {
+                const userId = rows[i].getElementsByTagName('td')[0].textContent.toLowerCase();
+                if (userId.includes(filterText)) {
+                    rows[i].style.display = '';
+                } else {
+                    rows[i].style.display = 'none';
+                }
+            }
+        }
+        
+        // Update the UI with current data
+        function updateUI() {
+            updateStatsDisplay();
+            updateReputationTable();
+            updateNetworkGraph();
+        }
+        
+        // Update the statistics display
+        function updateStatsDisplay() {
+            document.getElementById('totalUsers').textContent = users.length;
+            
+            let totalInteractions = 0;
+            users.forEach(user => {
+                totalInteractions += user.interactions.length;
+            });
+            document.getElementById('totalInteractions').textContent = totalInteractions;
+            
+            document.getElementById('currentTime').textContent = currentTimeStep;
+            
+            const totalReputation = users.reduce((sum, user) => sum + user.reputation, 0);
+            const avgReputation = totalReputation / users.length;
+            document.getElementById('avgReputation').textContent = avgReputation.toFixed(2);
+        }
+        
+        // Update the reputation table
+        function updateReputationTable() {
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+            
+            // Sort users by reputation (descending)
+            const sortedUsers = [...users].sort((a, b) => b.reputation - a.reputation);
+            
+            sortedUsers.forEach(user => {
+                const row = document.createElement('tr');
+                
+                const userIdCell = document.createElement('td');
+                userIdCell.textContent = user.userId;
+                row.appendChild(userIdCell);
+                
+                const reputationCell = document.createElement('td');
+                reputationCell.textContent = user.reputation;
+                
+                // Apply styling based on reputation value
+                if (user.reputation > 1) {
+                    reputationCell.className = 'reputation-positive';
+                } else if (user.reputation < -1) {
+                    reputationCell.className = 'reputation-negative';
+                } else {
+                    reputationCell.className = 'reputation-neutral';
+                }
+                
+                row.appendChild(reputationCell);
+                
+                const interactionsCell = document.createElement('td');
+                interactionsCell.textContent = user.interactions.length;
+                row.appendChild(interactionsCell);
+                
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Update the network graph visualization using D3.js
+        function updateNetworkGraph() {
+            // Clear previous graph
+            const graphElement = document.getElementById('networkGraph');
+            graphElement.innerHTML = '';
+            
+            // Create network data
+            const nodes = users.map(user => ({
+                id: user.userId,
+                value: user.reputation,
+                interactions: user.interactions.length
+            }));
+            
+            // Create links from interactions (avoid duplicates)
+            const linksMap = new Map();
+            
+            users.forEach(user => {
+                user.interactions.forEach(interaction => {
+                    const source = user.userId;
+                    const target = interaction.targetUserId;
+                    
+                    // Skip self-links
+                    if (source === target) return;
+                    
+                    // Create a unique key for this link
+                    const key = [source, target].sort().join('-');
+                    
+                    if (linksMap.has(key)) {
+                        linksMap.get(key).value += 1;
+                    } else {
+                        linksMap.set(key, {
+                            source: source,
+                            target: target,
+                            value: 1
+                        });
+                    }
+                });
+            });
+            
+            const links = Array.from(linksMap.values());
+            
+            // Dimensions and margins
+            const width = graphElement.clientWidth;
+     
